@@ -1,129 +1,198 @@
-# 🏠 House Price Prediction API
+# 📊 Telco Customer Churn Prediction
 
-## 📌 Overview
-End-to-end Machine Learning project to predict house prices using **Lasso Regression**.  
-The project covers the full ML lifecycle: data analysis, feature engineering, model training, evaluation, and deployment using FastAPI.
+## 🔍 Overview
+This project builds an end-to-end machine learning solution to predict customer churn using the Telco Customer Churn dataset.
+
+The goal is to identify customers who are likely to leave (churn) so that businesses can take proactive retention actions.
 
 ---
 
 ## 🎯 Problem Statement
-Predict house sale prices based on various property features such as:
-- living area
-- overall quality
-- number of rooms
-- garage capacity
-- construction year
+Customer churn is a critical challenge for subscription-based businesses.
 
-This is a **supervised regression problem**.
+The objective of this project is to:
+- Analyze customer behavior
+- Identify key drivers of churn
+- Build a predictive model to detect high-risk customers early
 
 ---
 
-## 📊 Dataset
-Kaggle Housing Dataset:  
-https://www.kaggle.com/datasets/yasserh/housing-prices-dataset
+## 📁 Dataset
+- Source: Kaggle Telco Customer Churn Dataset  
+- Records: 7,043 customers  
+- Features: 21 attributes (demographics, services, billing, etc.)
 
 ---
 
-## ⚙️ Approach
+## 🔎 Key Insights (EDA)
 
-### 1. Data Analysis (EDA)
-- Distribution analysis (SalePrice)
-- Outlier detection
-- Correlation analysis
-- Feature relationships (scatter plots, heatmap)
+From exploratory data analysis:
 
-### 2. Feature Engineering
-- Total square footage (`TotalSF`)
-- House age (`HouseAge`)
-- Remodel age (`RemodAge`)
-- Total bathrooms (`TotalBath`)
+- 📉 **Month-to-month contracts** have the highest churn (~43%)
+- ⚡ **Fiber optic users** show higher churn (~42%)
+- 💳 **Electronic check payments** have the highest churn (~45%)
+- ⏳ **Low tenure customers (~18 months)** are more likely to churn
+- 💰 **Higher monthly charges (~74)** correlate with churn
 
-### 3. Model Training
-- Linear Regression (baseline)
-- Ridge Regression
-- Lasso Regression (final model)
+👉 High-risk profile:
+> Month-to-month + Fiber + Electronic check
 
-### 4. Hyperparameter Tuning
-- Alpha tuning for Lasso
-- Selected best alpha = **0.001**
+---
 
-### 5. Model Evaluation
-- RMSE: ~19,400  
-- R² Score: ~0.92  
-- Cross-validation mean R²: ~0.91  
+## 🛠️ Feature Engineering
+
+- `AvgMonthlySpend = TotalCharges / tenure`
+- `IsLongTerm = tenure > 24`
+
+These features capture customer value and loyalty patterns.
+
+---
+
+## 🤖 Model
+
+### Final Model:
+- **Logistic Regression**
+- `class_weight = balanced`
+- `C = 10`
+- `max_iter = 5000`
+
+### Why Logistic Regression?
+- Strong performance on recall
+- Interpretable (feature importance)
+- More reliable than Random Forest for this dataset
+
+---
+
+## 📈 Model Performance
+
+| Metric | Value |
+|------|------|
+| Recall | ~0.80 |
+| ROC-AUC | ~0.86 |
+| Threshold | 0.3 |
+
+### 🎯 Why Recall?
+In churn prediction:
+> Missing a churner is more costly than a false alarm
+
+So the model is optimized to **capture as many churners as possible**.
+
+---
+
+## ⚖️ Model Comparison
+
+| Model | Recall |
+|------|--------|
+| Logistic Regression | ~0.80 ✅ |
+| Random Forest | ~0.47 ❌ |
+
+👉 Logistic Regression significantly outperformed Random Forest in detecting churn.
+
+---
+
+## 🧠 Model Interpretation
+
+Top features influencing churn:
+
+- InternetService_Fiber optic ↑
+- TotalCharges ↑
+- Streaming services ↑
+- Electronic payment methods ↑
+
+👉 Positive coefficients increase churn probability  
+👉 Negative coefficients reduce churn risk  
 
 ---
 
 ## 🚀 API Deployment
 
-The trained model is deployed using **FastAPI**.
+The model is deployed using **FastAPI**.
 
-### Run Locally
-
-bash
+### Run locally:
+``bash
 uvicorn app.main:app --reload
-Open the browser :  http://127.0.0.1:8000/docs
-Example Input : 
-{
-  "MSSubClass": 60,
-  "LotArea": 8450,
-  "OverallQual": 7,
-  "OverallCond": 5,
-  "YearBuilt": 2003,
-  "YearRemodAdd": 2003,
-  "first_flr_sf": 856,
-  "second_flr_sf": 854,
-  "GrLivArea": 1710,
-  "BsmtFullBath": 1,
-  "BsmtHalfBath": 0,
-  "FullBath": 2,
-  "HalfBath": 1,
-  "BedroomAbvGr": 3,
-  "KitchenAbvGr": 1,
-  "TotRmsAbvGrd": 8,
-  "GarageCars": 2,
-  "GarageArea": 548,
-  "TotalBsmtSF": 856,
-  "Fireplaces": 0,
-  "YrSold": 2008,
-  "MoSold": 2
-}
 
-Example output : 
-{
-  "predicted_price": 286244.69,
-  "model": "lasso_full"
-}
 ---
 
-## key learning 
-Importance of feature engineering consistency between training and inference
-Handling categorical variables with one-hot encoding
-Using Lasso for feature selection and regularization
-Aligning input features using reindex()
-Building and deploying ML models as APIs
+## End Points 
+POST /predict
 
-## Project Structure
-house-price-prediction/
+## Example Input:
+{
+  "gender": "Female",
+  "SeniorCitizen": 0,
+  "Partner": "No",
+  "Dependents": "No",
+  "tenure": 5,
+  "PhoneService": "Yes",
+  "MultipleLines": "No",
+  "InternetService": "Fiber optic",
+  "OnlineSecurity": "No",
+  "OnlineBackup": "No",
+  "DeviceProtection": "No",
+  "TechSupport": "No",
+  "StreamingTV": "No",
+  "StreamingMovies": "No",
+  "Contract": "Month-to-month",
+  "PaperlessBilling": "Yes",
+  "PaymentMethod": "Electronic check",
+  "MonthlyCharges": 85.0,
+  "TotalCharges": 500.0
+}
+
+## Example Output 
+{
+  "churn_probability": 0.86,
+  "prediction": "Churn"
+}
+
+## Project Structure 
+
+telco-churn-prediction/
 │
 ├── app/
-│   └── main.py
-├── models/
-│   ├── lasso_full_model.pkl
-│   └── model_columns_full.pkl
-├── notebooks/
+│   └── main.py              # FastAPI application
+│
 ├── data/
+│   └── Telco-Customer-Churn.csv
+│
+├── models/
+│   ├── churn_model.pkl
+│   └── model_columns.pkl
+│
+├── notebooks/
+│   └── Telco-Customer-Churn.ipynb
+│
 ├── requirements.txt
 └── README.md
 
+## Business Value
 
-## Tech Stack
-Python
-Pandas, NumPy
-Scikit-learn
-FastAPI
-Uvicorn
+This model enables businesses to:
 
-## Author
+Identify high-risk customers early
+Design targeted retention campaigns
+Reduce churn and increase customer lifetime value
 
-Pramila Soni
+## Key Learnings
+Importance of EDA for business insights
+Handling imbalanced datasets
+Trade-off between precision vs recall
+Using Pipeline to avoid data leakage
+Building production-ready ML APIs
+
+## Future Improvements
+Try advanced models (XGBoost, LightGBM)
+Add automated feature selection
+Deploy to cloud (AWS / Azure)
+Add real-time monitoring
+
+
+## Conclusion
+
+This project demonstrates how machine learning can go beyond prediction and act as a decision-support tool.
+By combining data analysis, model optimization, and deployment, the solution provides actionable insights for customer retention and business growth.
+
+
+
+
